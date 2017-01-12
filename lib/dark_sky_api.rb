@@ -1,20 +1,22 @@
 require "httparty"
 
 class DarkSkyApi
+  class MissingApiKeyError < RuntimeError; end;
   BASE_URL = "https://api.darksky.net"
 
   attr_reader :api_key, :number_of_calls_for_today
 
-  def initialize(api_key)
-     @api_key = api_key
-     @number_of_calls_for_today = { calls: 0, date: Date.today }
+  def initialize(api_key = nil)
+    raise MissingApiKeyError if api_key.nil?
+
+    @api_key = api_key
+    @number_of_calls_for_today = 0
   end
 
   def forecast(latitude, longitude, options = {})
-    response = HTTParty.get("#{BASE_URL}/forecast/#{@api_key}/#{latitude},#{longitude}").tap do |response|
-      new_number_of_calls = response.headers.fetch("x-forecast-api-calls").to_i
-      update_number_of_calls(new_number_of_calls)
-    end
+    response = HTTParty.get("#{BASE_URL}/forecast/#{@api_key}/#{latitude},#{longitude}")
+    update_number_of_calls(response.headers.fetch("x-forecast-api-calls").to_i)
+
     print @number_of_calls_for_today
     print response.parsed_response if response.code == 200
   end
@@ -22,10 +24,6 @@ class DarkSkyApi
   private
 
   def update_number_of_calls(new_number_of_calls)
-    if @number_of_calls_for_today[:date] < Date.today
-      @number_of_calls_for_today = { calls: 0, date: Date.today }
-    else
-      @number_of_calls_for_today[:calls] = new_number_of_calls
-    end
+    @number_of_calls_for_today = new_number_of_calls
   end
 end
