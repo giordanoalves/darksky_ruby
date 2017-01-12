@@ -14,11 +14,10 @@ class DarkSkyApi
   end
 
   def forecast(latitude, longitude, options = {})
-    response = HTTParty.get("#{BASE_URL}/forecast/#{@api_key}/#{latitude},#{longitude}")
+    response = HTTParty.get("#{BASE_URL}/forecast/#{api_key}/#{latitude},#{longitude}")
     update_number_of_calls(response.headers.fetch("x-forecast-api-calls").to_i)
 
-    print @number_of_calls_for_today
-    print response.parsed_response if response.code == 200
+    response.parsed_response if response.code == 200
   end
 
   private
